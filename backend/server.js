@@ -7,7 +7,7 @@ const { Parser } = require("json2csv");
 const crypto = require("crypto");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 const JWT_SECRET = "expense_tracker_secret";
 

@@ -1,5 +1,16 @@
+
 import { useEffect, useState } from "react";
+import {
+  Routes,
+  Route,
+  Navigate,
+  useNavigate
+} from "react-router-dom";
+
 import API from "./services/api";
+
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 
 import ExpenseForm from "./components/ExpenseForm";
 import ExpenseTable from "./components/ExpenseTable";
@@ -8,42 +19,145 @@ import SummaryCards from "./components/SummaryCards";
 import ExpenseChart from "./components/ExpenseChart";
 import CategoryTotals from "./components/CategoryTotals";
 
-function App() {
-  const [expenses, setExpenses] = useState([]);
-  const [summary, setSummary] = useState({});
-  const [chartData, setChartData] = useState([]);
-  const [categoryTotals, setCategoryTotals] =
+
+function Dashboard() {
+
+  const navigate = useNavigate();
+
+  const [expenses, setExpenses] =
     useState([]);
 
-  const [editingExpense, setEditingExpense] =
+  const [summary, setSummary] =
+    useState({});
+
+  const [chartData, setChartData] =
+    useState([]);
+
+  const [categoryTotals,
+    setCategoryTotals] =
+    useState([]);
+
+  const [editingExpense,
+    setEditingExpense] =
     useState(null);
 
-  const loadExpenses = async () => {
-    const res = await API.get(
-      "/expenses"
+  const logout = () => {
+
+    localStorage.removeItem(
+      "token"
     );
 
-    setExpenses(res.data);
-  };
-
-  const loadSummary = async () => {
-    const res = await API.get(
-      "/summary"
+    localStorage.removeItem(
+      "user"
     );
 
-    setSummary(res.data);
+    navigate("/login");
   };
 
-  const loadChartData = async () => {
-    const res = await API.get(
-      "/category-totals"
-    );
+  const exportCSV = async () => {
 
-    setChartData(res.data);
+    try {
+
+      const token =
+        localStorage.getItem(
+          "token"
+        );
+
+     const response =await fetch(
+    `${API.defaults.baseURL}/export-csv`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  );
+
+      const blob =
+        await response.blob();
+
+      const url =
+        window.URL.createObjectURL(
+          blob
+        );
+
+      const a =
+        document.createElement(
+          "a"
+        );
+
+      a.href = url;
+      a.download =
+        "expenses.csv";
+
+      document.body.appendChild(
+        a
+      );
+
+      a.click();
+
+      document.body.removeChild(
+        a
+      );
+
+      window.URL.revokeObjectURL(
+        url
+      );
+
+    } catch (error) {
+
+      console.error(
+        "CSV Export Failed:",
+        error
+      );
+
+      alert(
+        "Failed to export CSV"
+      );
+    }
   };
+
+  const loadExpenses =
+    async () => {
+
+      const res =
+        await API.get(
+          "/expenses"
+        );
+
+      setExpenses(
+        res.data
+      );
+    };
+
+  const loadSummary =
+    async () => {
+
+      const res =
+        await API.get(
+          "/summary"
+        );
+
+      setSummary(
+        res.data
+      );
+    };
+
+  const loadChartData =
+    async () => {
+
+      const res =
+        await API.get(
+          "/category-totals"
+        );
+
+      setChartData(
+        res.data
+      );
+    };
 
   const loadCategoryTotals =
     async () => {
+
       const res =
         await API.get(
           "/category-totals"
@@ -55,6 +169,7 @@ function App() {
     };
 
   const refreshData = () => {
+
     loadExpenses();
     loadSummary();
     loadChartData();
@@ -62,22 +177,55 @@ function App() {
   };
 
   useEffect(() => {
+
     refreshData();
+
   }, []);
 
   return (
     <div className="container">
-      <h1>
-        💰 Personal Finance Tracker
-      </h1>
 
-      {/* Summary Cards */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent:
+            "space-between",
+          alignItems:
+            "center",
+          marginBottom:
+            "20px"
+        }}
+      >
+        <h1>
+          💰 Personal Finance Tracker
+        </h1>
+
+        <button
+          onClick={logout}
+        >
+          Logout
+        </button>
+
+      </div>
+
       <SummaryCards
         summary={summary}
       />
 
-      {/* Chart + Totals */}
+      {/* CSV EXPORT */}
+
+      <div
+        className="export-section"
+      >
+        <button
+          onClick={exportCSV}
+        >
+          📥 Export CSV
+        </button>
+      </div>
+
       <div className="analytics-section">
+
         <div className="analytics-item">
           <ExpenseChart
             data={chartData}
@@ -89,22 +237,9 @@ function App() {
             data={categoryTotals}
           />
         </div>
+
       </div>
 
-      {/* CSV Export */}
-      <div className="export-section">
-        <a
-          href="http://localhost:3000/api/export-csv"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <button>
-            Export CSV
-          </button>
-        </a>
-      </div>
-
-      {/* Expense Form */}
       <ExpenseForm
         editingExpense={
           editingExpense
@@ -117,14 +252,12 @@ function App() {
         }
       />
 
-      {/* Filters */}
       <Filters
         setExpenses={
           setExpenses
         }
       />
 
-      {/* Table */}
       <ExpenseTable
         expenses={expenses}
         setEditingExpense={
@@ -134,8 +267,81 @@ function App() {
           refreshData
         }
       />
+
     </div>
   );
 }
 
+
+
+function ProtectedRoute({
+  children
+}) {
+
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  return token
+    ? children
+    : (
+      <Navigate
+        to="/login"
+      />
+    );
+}
+
+function App() {
+
+  return (
+    <Routes>
+
+      <Route
+        path="/login"
+        element={
+          <Login />
+        }
+      />
+
+      <Route
+        path="/signup"
+        element={
+          <Signup />
+        }
+      />
+
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/"
+        element={
+          localStorage.getItem(
+            "token"
+          )
+            ? (
+              <Navigate
+                to="/dashboard"
+              />
+            )
+            : (
+              <Navigate
+                to="/login"
+              />
+            )
+        }
+      />
+
+    </Routes>
+  );
+}
+
 export default App;
+

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import API from "../services/api";
 
@@ -22,28 +23,68 @@ export default function ExpenseForm({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (editingExpense) {
-      await API.put(
-        `/expenses/${editingExpense.id}`,
-        form
-      );
-    } else {
-      await API.post("/expenses", form);
+    if (!form.amount) {
+      alert("Amount is required");
+      return;
     }
 
-    setForm({
-      amount: "",
-      category: "",
-      note: "",
-      date: ""
-    });
+    if (Number(form.amount) <= 0) {
+      alert("Amount must be greater than 0");
+      return;
+    }
 
-    setEditingExpense(null);
-    refresh();
+    if (!form.date) {
+      alert("Date is required");
+      return;
+    }
+
+    const selectedDate = new Date(form.date);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (selectedDate > today) {
+      alert(
+        "Invalid date. Future dates are not allowed."
+      );
+      return;
+    }
+
+    try {
+      if (editingExpense) {
+        await API.put(
+          `/expenses/${editingExpense.id}`,
+          form
+        );
+      } else {
+        await API.post(
+          "/expenses",
+          form
+        );
+      }
+
+      setForm({
+        amount: "",
+        category: "",
+        note: "",
+        date: ""
+      });
+
+      setEditingExpense(null);
+
+      refresh();
+
+    } catch (error) {
+      alert(
+        error.response?.data?.error ||
+        "Something went wrong"
+      );
+    }
   };
 
   return (
     <form onSubmit={handleSubmit}>
+
       <input
         type="number"
         placeholder="Amount"
@@ -54,6 +95,7 @@ export default function ExpenseForm({
             amount: e.target.value
           })
         }
+        required
       />
 
       <select
@@ -85,6 +127,7 @@ export default function ExpenseForm({
             date: e.target.value
           })
         }
+        required
       />
 
       <input
@@ -103,6 +146,8 @@ export default function ExpenseForm({
           ? "Update Expense"
           : "Add Expense"}
       </button>
+
     </form>
   );
 }
+

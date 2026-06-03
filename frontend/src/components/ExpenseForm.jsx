@@ -23,33 +23,32 @@ export default function ExpenseForm({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.amount) {
-      alert("Amount is required");
-      return;
-    }
+   if (!form.amount) {
+  alert("Amount is required");
+  return;
+}
 
-    if (Number(form.amount) <= 0) {
-      alert("Amount must be greater than 0");
-      return;
-    }
+if (Number(form.amount) <= 0) {
+  alert("Amount must be greater than 0");
+  return;
+}
 
-    if (!form.date) {
-      alert("Date is required");
-      return;
-    }
+if (!form.date) {
+  alert("Date is required");
+  return;
+}
 
-    const selectedDate = new Date(form.date);
+const today =
+  new Date()
+    .toISOString()
+    .split("T")[0];
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (selectedDate > today) {
-      alert(
-        "Invalid date. Future dates are not allowed."
-      );
-      return;
-    }
-
+if (form.date > today) {
+  alert(
+    "Invalid date. Future dates are not allowed."
+  );
+  return;
+}
     try {
       if (editingExpense) {
         await API.put(

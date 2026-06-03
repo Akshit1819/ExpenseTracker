@@ -1,87 +1,154 @@
-```jsx
 export default function CategoryTotals({
-  data
+  data,
+  budgets = []
 }) {
 
-  const budgets = {
-    Food: 5000,
-    Transport: 2000,
-    Bills: 3000,
-    Entertainment: 4000,
-    Other: 2000
+  const getBudget = (
+    category
+  ) => {
+
+    const budget =
+      budgets.find(
+        (b) =>
+          b.category ===
+          category
+      );
+
+    return budget
+      ? Number(
+          budget.limit_amount
+        )
+      : 0;
   };
 
   return (
     <div className="card">
-      <h3>Category Totals</h3>
+
+      <h3>
+        Category Budgets
+      </h3>
 
       {data.length === 0 && (
-        <p>No expenses found</p>
+        <p>
+          No expenses found
+        </p>
       )}
 
       {data.map((item) => {
 
         const budget =
-          budgets[item.category] || 0;
+          getBudget(
+            item.category
+          );
+
+        const spent =
+          Number(
+            item.total
+          );
+
+        const percentage =
+          budget > 0
+            ? (
+                spent /
+                budget
+              ) * 100
+            : 0;
 
         const overBudget =
-          item.total > budget;
+          spent > budget;
 
         return (
+
           <div
-            key={item.category}
+            key={
+              item.category
+            }
             style={{
-              marginBottom: "12px"
+              marginBottom:
+                "20px"
             }}
           >
-            <p>
+
+            <div
+              style={{
+                display:
+                  "flex",
+                justifyContent:
+                  "space-between"
+              }}
+            >
+
               <strong>
-                {item.category}
+                {
+                  item.category
+                }
               </strong>
-            </p>
 
-            <p>
-              Spent:
-              {" "}
-              {new Intl.NumberFormat(
-                "en-IN",
-                {
-                  style: "currency",
-                  currency: "INR"
-                }
-              ).format(item.total)}
-            </p>
+              <span>
+                ₹{spent}
+                {" / "}
+                ₹{budget}
+              </span>
 
-            <p>
-              Budget:
-              {" "}
-              {new Intl.NumberFormat(
-                "en-IN",
-                {
-                  style: "currency",
-                  currency: "INR"
+            </div>
+
+            <div
+              className="budget-bar"
+            >
+
+              <div
+                className={
+                  overBudget
+                    ? "budget-fill-over"
+                    : "budget-fill"
                 }
-              ).format(budget)}
+                style={{
+                  width:
+                    `${Math.min(
+                      percentage,
+                      100
+                    )}%`
+                }}
+              />
+
+            </div>
+
+            <p
+              style={{
+                marginTop:
+                  "5px"
+              }}
+            >
+
+              {percentage.toFixed(
+                0
+              )}
+              % Used
+
             </p>
 
             <p
               style={{
-                color: overBudget
-                  ? "red"
-                  : "green",
-                fontWeight: "bold"
+                color:
+                  overBudget
+                    ? "red"
+                    : "green",
+                fontWeight:
+                  "bold"
               }}
             >
+
               {overBudget
                 ? "🔴 Over Budget"
                 : "🟢 Within Budget"}
+
             </p>
 
-            <hr />
           </div>
+
         );
       })}
+
     </div>
   );
 }
-```

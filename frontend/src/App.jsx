@@ -18,6 +18,7 @@ import Filters from "./components/Filters";
 import SummaryCards from "./components/SummaryCards";
 import ExpenseChart from "./components/ExpenseChart";
 import CategoryTotals from "./components/CategoryTotals";
+import BudgetSettings from "./components/BudgetSettings";
 
 
 function Dashboard() {
@@ -34,12 +35,18 @@ function Dashboard() {
     useState([]);
 
   const [categoryTotals,
-    setCategoryTotals] =
-    useState([]);
+  setCategoryTotals] =
+  useState([]);
 
-  const [editingExpense,
-    setEditingExpense] =
-    useState(null);
+  const [budgets,
+  setBudgets] =
+  useState([]);
+
+const [editingExpense,
+  setEditingExpense] =
+  useState(null);
+
+  
 
   const logout = () => {
 
@@ -167,14 +174,27 @@ function Dashboard() {
         res.data
       );
     };
+    const loadBudgets =
+  async () => {
+
+    const res =
+      await API.get(
+        "/budgets"
+      );
+
+    setBudgets(
+      res.data
+    );
+  };
 
   const refreshData = () => {
 
-    loadExpenses();
-    loadSummary();
-    loadChartData();
-    loadCategoryTotals();
-  };
+  loadExpenses();
+  loadSummary();
+  loadChartData();
+  loadCategoryTotals();
+  loadBudgets();
+};
 
   useEffect(() => {
 
@@ -214,15 +234,15 @@ function Dashboard() {
 
       {/* CSV EXPORT */}
 
-      <div
-        className="export-section"
-      >
-        <button
-          onClick={exportCSV}
-        >
-          📥 Export CSV
-        </button>
-      </div>
+      <div className="export-section">
+  <button onClick={exportCSV}>
+    📥 Export CSV
+  </button>
+</div>
+
+<BudgetSettings
+  refresh={refreshData}
+/>
 
       <div className="analytics-section">
 
@@ -234,8 +254,10 @@ function Dashboard() {
 
         <div className="analytics-item">
           <CategoryTotals
-            data={categoryTotals}
-          />
+  data={categoryTotals}
+  budgets={budgets}
+/>
+          
         </div>
 
       </div>

@@ -39,6 +39,24 @@ CREATE TABLE IF NOT EXISTS users (
 )
 `).run();
 
+db.prepare(`
+CREATE TABLE IF NOT EXISTS budgets (
+  category TEXT PRIMARY KEY,
+  limit_amount REAL NOT NULL
+)
+`).run();
+
+db.prepare(`
+INSERT OR IGNORE INTO budgets
+(category, limit_amount)
+VALUES
+('Food',5000),
+('Transport',2000),
+('Bills',3000),
+('Entertainment',4000),
+('Other',2000)
+`).run();
+
 // ======================
 // SIGNUP
 // ======================
@@ -173,11 +191,16 @@ function authenticateToken(
     (err, user) => {
 
       if (err) {
-        return res.status(403).json({
-          error: "Invalid token"
-        });
-      }
 
+  console.log(
+    "JWT ERROR:",
+    err
+  );
+
+  return res.status(403).json({
+    error: err.message
+  });
+}
       req.user = user;
 
       next();
@@ -231,6 +254,13 @@ selectedDate.setHours(
 today.setHours(
   0, 0, 0, 0
 );
+
+if (selectedDate > today){
+  return res.status(400).json({
+    error:
+      "Future dates are not allowed"
+  });
+}
 
 
 if (selectedDate > today){
@@ -552,6 +582,55 @@ app.get(
     );
 
     res.json(highest || {});
+
+  }
+);
+
+// ======================
+// GET BUDGETS
+// ======================
+
+app.get(
+  "/api/budgets",
+  authenticateToken,
+  (req, res) => {
+
+    const budgets = db.prepare(`
+      SELECT *
+      FROM budgets
+      ORDER BY category
+    `).all();
+
+    res.json(budgets);
+
+  }
+);
+
+// ======================
+// UPDATE BUDGET
+// ======================
+
+app.put(
+  "/api/budgets/:category",
+  authenticateToken,
+  (req, res) => {
+
+    const { limit_amount } =
+      req.body;
+
+    db.prepare(`
+      UPDATE budgets
+      SET limit_amount = ?
+      WHERE category = ?
+    `).run(
+      Number(limit_amount),
+      req.params.category
+    );
+
+    res.json({
+      message:
+        "Budget updated successfully"
+    });
 
   }
 );
